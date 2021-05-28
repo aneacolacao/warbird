@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+
+  wordpress:
+    image: ${WORDPRESS_IMAGE_VERSION:-wordpress:latest}
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: warbird_wordpress
+    depends_on:
+      - db
+    env_file:
+      - ./.env
+    extra_hosts:
+     - "${VIRTUAL_HOST:-dev.local}:127.0.0.1"
+    ports:
+      - "80:80"
+    restart: on-failure
+    volumes:
+      - ./src:/var/www/html/wp-content
+
+  db:
+    image: ${MYSQL_IMAGE_VERSION:-mariadb:latest}
+    container_name: warbird_db
+    env_file:
+      - ./.env
+    restart: on-failure
+    volumes:
+      - db:/var/lib/mysql
+      - ./dumps/dump.sql:/dump.sql
+
+  phpmyadmin:
+    image: ${PMA_IMAGE_VERSION:-phpmyadmin:latest}
+    container_name: warbird_phpmyadmin
+    depends_on:
+      - db
+    ports:
+      - "8080:80"
+    environment:
+      PMA_USER: root
+      PMA_PASSWORD: root
+
+volumes:
+  db:
